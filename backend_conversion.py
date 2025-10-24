@@ -1,57 +1,52 @@
-# In backend_conversion.py
+# Save this file as backend_conversion.py
 
-import fitz  # PyMuPDF
+import fitz
 from pptx import Presentation
 from pptx.util import Pt, Inches
 import io
 import traceback
 
-POINTS_TO_EMUS = 12700  # PDF points to PPTX EMUs
+POINTS_TO_EMUS = 12700
 
-def convert_pdf_to_ppt_hybrid(pdf_path, ppt_path, progress_callback):
+# --- MODIFIED: Added 'dpi' parameter ---
+def convert_pdf_to_ppt_hybrid(pdf_path, ppt_path, progress_callback, dpi=150):
     """
-    Converts PDF to a hybrid PPT using an expanded redaction method to remove
-    tight-fitting background shapes behind text.
+    Converts PDF to a hybrid PPT using a robust in-memory redaction method.
+    The 'dpi' parameter controls the quality and speed of background rendering.
     """
     try:
-        # Step 1: Get original text content and positions
         original_doc = fitz.open(pdf_path)
         if original_doc.page_count == 0:
             return "The selected PDF is empty."
         
         original_text_data = [page.get_text("dict") for page in original_doc]
         
-        # Step 2: Create a text-free version of the PDF in memory
         clean_doc_in_memory = fitz.open()
         for page_num, page in enumerate(original_doc):
-            # Mark every text span for redaction
             for block in original_text_data[page_num]["blocks"]:
                 if block['type'] == 0:
                     for line in block['lines']:
                         for span in line['spans']:
-                            # --- THE FIX: Expand the redaction area ---
-                            # Create a rectangle from the text's bounding box
                             redaction_rect = fitz.Rect(span['bbox'])
-                            # Expand it by 2 pixels in each direction to catch background boxes
                             redaction_rect.x0 -= 2
                             redaction_rect.y0 -= 2
                             redaction_rect.x1 += 2
                             redaction_rect.y1 += 2
                             page.add_redact_annot(redaction_rect)
             
-            page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE) # Only remove text/vectors, not images
+            page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE)
             clean_doc_in_memory.insert_pdf(original_doc, from_page=page.number, to_page=page.number)
         
         original_doc.close()
 
-        # Step 3: Build the PowerPoint
         prs = Presentation()
         first_page = clean_doc_in_memory.load_page(0)
         prs.slide_width = int(first_page.rect.width * POINTS_TO_EMUS)
         prs.slide_height = int(first_page.rect.height * POINTS_TO_EMUS)
 
         for page_num, page in enumerate(clean_doc_in_memory):
-            pix = page.get_pixmap(dpi=150)
+            # --- MODIFIED: Use the 'dpi' parameter here ---
+            pix = page.get_pixmap(dpi=dpi)
             
             slide = prs.slides.add_slide(prs.slide_layouts[6])
             slide.shapes.add_picture(
@@ -71,13 +66,11 @@ def convert_pdf_to_ppt_hybrid(pdf_path, ppt_path, progress_callback):
                             )
                             txBox.fill.background()
                             txBox.line.fill.background()
-                            
                             p = txBox.text_frame.paragraphs[0]
                             p.margin_left = 0
                             p.margin_right = 0
                             p.margin_top = 0
                             p.margin_bottom = 0
-
                             run = p.add_run()
                             run.text = span['text']
                             font = run.font
@@ -93,8 +86,12 @@ def convert_pdf_to_ppt_hybrid(pdf_path, ppt_path, progress_callback):
         traceback.print_exc()
         return f"Hybrid conversion failed: {str(e)}"
 
-# --- The rest of the file (convert_pdf_to_ppt_image_only and CONVERSION_STRATEGIES) remains unchanged ---
-def convert_pdf_to_ppt_image_only(pdf_path, ppt_path, progress_callback):
+# --- MODIFIED: Added 'dpi' parameter ---
+def convert_pdf_to_ppt_image_only(pdf_path, ppt_path, progress_callback, dpi=150):
+    """
+    Converts each PDF page to a non-editable image on a PPT slide.
+    The 'dpi' parameter controls the quality and speed.
+    """
     try:
         pdf_doc = fitz.open(pdf_path)
         prs = Presentation()
@@ -103,7 +100,8 @@ def convert_pdf_to_ppt_image_only(pdf_path, ppt_path, progress_callback):
         prs.slide_width = Inches(16)
         prs.slide_height = Inches(9)
         for page_num, page in enumerate(pdf_doc):
-            pix = page.get_pixmap(dpi=150)
+            # --- MODIFIED: Use the 'dpi' parameter here ---
+            pix = page.get_pixmap(dpi=dpi)
             slide = prs.slides.add_slide(prs.slide_layouts[6])
             slide.shapes.add_picture(
                 io.BytesIO(pix.tobytes("png")), Inches(0), Inches(0),
