@@ -25,6 +25,7 @@ function App() {
         
         {/* Add more routes here for future converters */}
         {/* <Route path="/image-compressor" element={<ImageCompressor />} /> */}
+        <Route path="/video-downloader" element={<div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '2rem', fontFamily: 'Anton, sans-serif'}}>Video Downloader - Coming Soon</div>} />
       </Routes>
     </BrowserRouter>
   );

@@ -69,8 +69,8 @@ const MainMenu = ({ stats }) => {
           onClick={() => navigate('/pdf-to-ppt')}
         />
         <g transform="translate(200, 220) rotate(5)" className="pointer-events-none">
-          <circle cx="80" cy="0" r="45" fill="black" opacity="0.85"/>
-          <path d="M 80 -20 L 80 15 M 70 -10 L 80 -20 L 90 -10" stroke="white" strokeWidth="4" fill="none"/>
+          <circle cx="80" cy="8" r="45" fill="black" opacity="0.25"/>
+          <path d="M 80 -12 L 80 23 M 70 -2 L 80 -12 L 90 -2" stroke="white" strokeWidth="4" fill="none"/>
           <text x="0" y="80" fontSize="52" fontWeight="bold" fill="black" className="title-font">PDF TO PPT</text>
           <text x="45" y="120" fontSize="24" fill="black" className="body-font">CONVERTER</text>
         </g>
@@ -103,17 +103,19 @@ const MainMenu = ({ stats }) => {
           strokeWidth="8"
         />
         
-        {/* Large blue center */}
+        {/* Large blue center - VIDEO DOWNLOADER */}
         <polygon 
           points="610,280 1150,310 1140,480 600,450" 
           fill="#0047AB" 
           stroke="black" 
           strokeWidth="12"
           className="cursor-pointer hover:brightness-110 transition-all"
+          onClick={() => navigate('/video-downloader')}
         />
         <g transform="translate(820, 370) rotate(1.5)" className="pointer-events-none">
           <circle cx="0" cy="0" r="38" fill="white" opacity="0.3"/>
-          <text x="-80" y="50" fontSize="26" fontWeight="bold" fill="white" className="accent-font">COMING SOON</text>
+          <text x="-110" y="10" fontSize="32" fontWeight="bold" fill="white" className="accent-font">VIDEO</text>
+          <text x="-110" y="45" fontSize="32" fontWeight="bold" fill="white" className="accent-font">DOWNLOADER</text>
         </g>
         
         {/* Large cream/white right side */}
