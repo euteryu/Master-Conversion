@@ -129,14 +129,14 @@ const PdfToPptConverter = () => {
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
         
         .noise-bg {
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         }
         
         .bauhaus-btn {
-          font-family: 'Anton', sans-serif;
+          font-family: 'Audiowide', sans-serif;
           letter-spacing: 0.5px;
           text-transform: uppercase;
         }
@@ -164,7 +164,7 @@ const PdfToPptConverter = () => {
             fontSize: '1rem',
             fontWeight: 700,
             padding: '0.5rem 1rem',
-            fontFamily: 'Anton'
+            fontFamily: 'Audiowide'
           }}
         >
           <ArrowLeft size={24} strokeWidth={3} />
@@ -221,7 +221,7 @@ const PdfToPptConverter = () => {
                 left: '50%',
                 transform: 'translate(-50%, -50%) rotate(15deg)',
                 fontSize: '1.6rem',
-                fontFamily: 'Anton',
+                fontFamily: 'Audiowide',
                 fontWeight: 900,
                 color: '#000',
                 textTransform: 'lowercase'
@@ -327,7 +327,7 @@ const PdfToPptConverter = () => {
                 fontSize: '1.2rem',
                 cursor: 'pointer',
                 boxShadow: '4px 4px 0 #000',
-                fontFamily: 'Anton'
+                fontFamily: 'Audiowide'
               }}
             >
               + Add More Files
@@ -357,7 +357,7 @@ const PdfToPptConverter = () => {
                 <X size={24} />
               </button>
 
-              <div style={{ fontFamily: 'Anton', fontSize: '1.3rem', marginBottom: '0.5rem', paddingRight: '3rem' }}>
+              <div style={{ fontFamily: 'Audiowide', fontSize: '1.3rem', marginBottom: '0.5rem', paddingRight: '3rem' }}>
                 {fileItem.file.name}
               </div>
               <div style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
@@ -377,7 +377,7 @@ const PdfToPptConverter = () => {
                     fontSize: '1.5rem',
                     cursor: 'pointer',
                     boxShadow: '4px 4px 0 #000',
-                    fontFamily: 'Anton'
+                    fontFamily: 'Audiowide'
                   }}
                 >
                   Convert →
@@ -398,7 +398,7 @@ const PdfToPptConverter = () => {
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    fontFamily: 'Anton',
+                    fontFamily: 'Audiowide',
                     fontSize: '1.2rem',
                     mixBlendMode: 'difference',
                     color: '#FFF'
@@ -421,7 +421,7 @@ const PdfToPptConverter = () => {
                     fontSize: '1.5rem',
                     cursor: 'pointer',
                     boxShadow: '4px 4px 0 #000',
-                    fontFamily: 'Anton'
+                    fontFamily: 'Audiowide'
                   }}
                 >
                   ✓ Download
@@ -429,7 +429,7 @@ const PdfToPptConverter = () => {
               )}
 
               {fileItem.status === 'error' && (
-                <div style={{ padding: '1rem', background: '#E63946', color: '#FFF', border: '3px solid #000', fontFamily: 'Anton' }}>
+                <div style={{ padding: '1rem', background: '#E63946', color: '#FFF', border: '3px solid #000', fontFamily: 'Audiowide' }}>
                   Error: {fileItem.error || 'Conversion failed'}
                 </div>
               )}
@@ -463,7 +463,7 @@ const PdfToPptConverter = () => {
           pointerEvents: 'none'
         }}>
           <div style={{
-            fontFamily: 'Anton',
+            fontFamily: 'Audiowide',
             fontSize: '4rem',
             color: '#4A90E2',
             textShadow: '4px 4px 0 #000'

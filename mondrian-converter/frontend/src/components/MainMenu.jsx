@@ -9,10 +9,30 @@ const MainMenu = ({ stats }) => {
   return (
     <div className="h-screen w-screen bg-gray-100 flex items-center justify-center overflow-hidden">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Condensed:wght@700&family=Oswald:wght@600&display=swap');
-        .title-font { font-family: 'Bebas Neue', sans-serif; }
-        .body-font { font-family: 'Roboto Condensed', sans-serif; }
-        .accent-font { font-family: 'Oswald', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+        .title-font { font-family: 'Audiowide', sans-serif; }
+        .body-font { font-family: 'Audiowide', sans-serif; }
+        .accent-font { font-family: 'Audiowide', sans-serif; }
+        
+        @keyframes bounceAround {
+          0% { transform: translate(0, 0); }
+          25% { transform: translate(80px, -30px); }
+          50% { transform: translate(120px, 20px); }
+          75% { transform: translate(40px, 40px); }
+          100% { transform: translate(0, 0); }
+        }
+        
+        @keyframes pdfCircleBounce {
+          0% { transform: translate(0, 0); }
+          12.5% { transform: translate(45px, -25px); }
+          25% { transform: translate(80px, 10px); }
+          37.5% { transform: translate(110px, -35px); }
+          50% { transform: translate(85px, 20px); }
+          62.5% { transform: translate(35px, 35px); }
+          75% { transform: translate(10px, -15px); }
+          87.5% { transform: translate(60px, 25px); }
+          100% { transform: translate(0, 0); }
+        }
       `}</style>
 
       {/* SVG canvas with perspective grid */}
@@ -20,9 +40,9 @@ const MainMenu = ({ stats }) => {
         <defs>
           <style>
             {`
-              .title-font { font-family: 'Bebas Neue', sans-serif; }
-              .body-font { font-family: 'Roboto Condensed', sans-serif; }
-              .accent-font { font-family: 'Oswald', sans-serif; }
+              .title-font { font-family: 'Audiowide', sans-serif; }
+              .body-font { font-family: 'Audiowide', sans-serif; }
+              .accent-font { font-family: 'Audiowide', sans-serif; }
             `}
           </style>
         </defs>
@@ -68,9 +88,20 @@ const MainMenu = ({ stats }) => {
           className="cursor-pointer hover:brightness-110 transition-all"
           onClick={() => navigate('/pdf-to-ppt')}
         />
+        <defs>
+          <clipPath id="yellowBoxClip">
+            <polygon points="80,120 650,180 620,450 60,380" />
+          </clipPath>
+        </defs>
+        <g clipPath="url(#yellowBoxClip)">
+          <g transform="translate(200, 220) rotate(5)">
+            <g style={{animation: 'pdfCircleBounce 12s ease-in-out infinite'}}>
+              <circle cx="80" cy="8" r="45" fill="black" opacity="0.25"/>
+              <path d="M 80 -12 L 80 23 M 70 -2 L 80 -12 L 90 -2" stroke="white" strokeWidth="4" fill="none"/>
+            </g>
+          </g>
+        </g>
         <g transform="translate(200, 220) rotate(5)" className="pointer-events-none">
-          <circle cx="80" cy="8" r="45" fill="black" opacity="0.25"/>
-          <path d="M 80 -12 L 80 23 M 70 -2 L 80 -12 L 90 -2" stroke="white" strokeWidth="4" fill="none"/>
           <text x="0" y="80" fontSize="52" fontWeight="bold" fill="black" className="title-font">PDF TO PPT</text>
           <text x="45" y="120" fontSize="24" fill="black" className="body-font">CONVERTER</text>
         </g>
@@ -110,12 +141,26 @@ const MainMenu = ({ stats }) => {
           stroke="black" 
           strokeWidth="12"
           className="cursor-pointer hover:brightness-110 transition-all"
-          onClick={() => navigate('/video-downloader')}
+          onClick={() => navigate('/media-machine')}
         />
-        <g transform="translate(820, 370) rotate(1.5)" className="pointer-events-none">
-          <circle cx="0" cy="0" r="38" fill="white" opacity="0.3"/>
-          <text x="-110" y="10" fontSize="32" fontWeight="bold" fill="white" className="accent-font">VIDEO</text>
-          <text x="-110" y="45" fontSize="32" fontWeight="bold" fill="white" className="accent-font">DOWNLOADER</text>
+        <defs>
+          <clipPath id="blueBoxClip">
+            <polygon points="610,280 1150,310 1140,480 600,450" />
+          </clipPath>
+        </defs>
+        <g clipPath="url(#blueBoxClip)">
+          <g style={{animation: 'bounceAround 8s ease-in-out infinite'}}>
+            <circle cx="875" cy="380" r="35" fill="white" opacity="0.4"/>
+            <path d="M 875 360 L 875 395 M 865 370 L 875 360 L 885 370" 
+                  stroke="black" 
+                  strokeWidth="3" 
+                  fill="none"
+                  opacity="0.8"/>
+          </g>
+        </g>
+        <g transform="translate(800, 370) rotate(1.5)" className="pointer-events-none">
+          <text x="-95" y="5" fontSize="28" fontWeight="bold" fill="white" className="accent-font">VIDEO</text>
+          <text x="-135" y="40" fontSize="28" fontWeight="bold" fill="white" className="accent-font">DOWNLOADER</text>
         </g>
         
         {/* Large cream/white right side */}

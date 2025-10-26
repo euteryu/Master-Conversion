@@ -1,8 +1,10 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainMenu from './components/MainMenu';
 import PdfToPptConverter from './components/converters/PdfToPptConverter';
+import VideoDownloader from './components/converters/VideoDownloader';
+import YoutubeDownloader from './components/converters/YoutubeDownloader';
 import { statsService } from './services/statsService';
 
 function App() {
@@ -23,9 +25,11 @@ function App() {
         {/* PDF to PPT Converter Route */}
         <Route path="/pdf-to-ppt" element={<PdfToPptConverter />} />
         
-        {/* Add more routes here for future converters */}
-        {/* <Route path="/image-compressor" element={<ImageCompressor />} /> */}
-        <Route path="/video-downloader" element={<div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '2rem', fontFamily: 'Anton, sans-serif'}}>Video Downloader - Coming Soon</div>} />
+        {/* Media Machine Routes */}
+        <Route path="/media-machine" element={<VideoDownloader />} />
+        <Route path="/media-machine/convert-media" element={<div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '2rem', fontFamily: 'Audiowide, sans-serif'}}>Convert Media - Coming Soon</div>} />
+        {/* Updated route to use the new component */}
+        <Route path="/media-machine/download-youtube" element={<YoutubeDownloader />} />
       </Routes>
     </BrowserRouter>
   );
