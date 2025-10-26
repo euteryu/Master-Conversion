@@ -50,5 +50,23 @@ export const conversionService = {
 
   downloadFile(filename) {
     window.open(`${API_URL}/download/${filename}`, '_blank');
+  },
+
+  // --- NEW FUNCTION ADDED HERE ---
+  async downloadYoutubeVideo(url, format) {
+    const response = await fetch(`${API_URL}/download-youtube`, { // Using a distinct endpoint name
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url, format }),
+    });
+  
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'An unknown error occurred during download.');
+    }
+  
+    return response.json();
   }
 };

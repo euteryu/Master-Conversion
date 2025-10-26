@@ -1,5 +1,5 @@
 # Save this file as app.py
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
@@ -7,6 +7,8 @@ import json
 from datetime import datetime
 import threading
 from backend_conversion import CONVERSION_STRATEGIES
+import subprocess # <-- NEW IMPORT
+import uuid       # <-- NEW IMPORT
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -81,6 +83,49 @@ def upload_file():
         'original_name': filename
     })
 
+# --- NEW YOUTUBE DOWNLOADER ROUTE ---
+@app.route('/api/download-youtube', methods=['POST'])
+def download_youtube_video():
+    data = request.get_json()
+    url = data.get('url')
+    format_choice = data.get('format')
+
+    if not url or not format_choice:
+        return jsonify({'error': 'Missing URL or format'}), 400
+
+    unique_id = str(uuid.uuid4())
+    command = ['yt-dlp']
+    
+    if format_choice == 'mp3_audio':
+        filename = f"{unique_id}.mp3"
+        output_path_template = os.path.join(OUTPUT_FOLDER, f"{unique_id}.%(ext)s")
+        command.extend(['-x', '--audio-format', 'mp3', '-o', output_path_template, url])
+    
+    elif format_choice == 'mkv_video':
+        filename = f"{unique_id}.mkv"
+        output_path = os.path.join(OUTPUT_FOLDER, filename)
+        command.extend(['-f', 'bv*+ba/b', '--merge-output-format', 'mkv', '-o', output_path, url])
+
+    else: # Default to mp4_video
+        filename = f"{unique_id}.mp4"
+        output_path = os.path.join(OUTPUT_FOLDER, filename)
+        command.extend(['-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '-o', output_path, url])
+    
+    try:
+        print(f"Executing command: {' '.join(command)}")
+        # Using check=True will raise an exception if yt-dlp fails
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        print(f"Successfully created file: {filename}")
+        return jsonify({'message': 'Download successful!', 'filename': filename})
+    except subprocess.CalledProcessError as e:
+        print("Error from yt-dlp:", e.stderr)
+        return jsonify({'error': 'Failed to download or convert video.', 'details': e.stderr}), 500
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return jsonify({'error': 'An unexpected server error occurred.'}), 500
+# --- END OF NEW ROUTE ---
+
+
 @app.route('/api/convert', methods=['POST'])
 def convert_file():
     """Start file conversion"""
@@ -110,43 +155,32 @@ def convert_file():
     if not os.path.exists(input_path):
         return jsonify({'error': 'Input file not found'}), 404
     
-    # Generate output filename
     base_name = os.path.splitext(input_filename)[0]
     output_extension = '.pptx' if to_format == 'PPT' else f'.{to_format.lower()}'
     output_filename = f"{base_name}_converted{output_extension}"
     output_path = os.path.join(OUTPUT_FOLDER, output_filename)
     
-    # Get conversion strategy
     strategy_key = (from_format, to_format, strategy_mode)
     conversion_function = CONVERSION_STRATEGIES.get(strategy_key)
     
     if not conversion_function:
         return jsonify({'error': f'Conversion from {from_format} to {to_format} not supported'}), 400
     
-    # Create conversion ID
     conversion_id = f"{datetime.now().timestamp()}"
     active_conversions[conversion_id] = {
-        'status': 'processing',
-        'progress': 0,
-        'total': 0,
+        'status': 'processing', 'progress': 0, 'total': 0,
         'output_file': output_filename
     }
     
-    # Progress callback
     def progress_callback(current, total):
         active_conversions[conversion_id]['progress'] = current
         active_conversions[conversion_id]['total'] = total
     
-    # Run conversion in background thread
     def run_conversion():
         try:
             error = conversion_function(
-                input_path, 
-                output_path, 
-                progress_callback, 
-                dpi=dpi
+                input_path, output_path, progress_callback, dpi=dpi
             )
-            
             if error:
                 active_conversions[conversion_id]['status'] = 'error'
                 active_conversions[conversion_id]['error'] = error
@@ -160,10 +194,7 @@ def convert_file():
     thread = threading.Thread(target=run_conversion, daemon=True)
     thread.start()
     
-    return jsonify({
-        'success': True,
-        'conversion_id': conversion_id
-    })
+    return jsonify({'success': True, 'conversion_id': conversion_id})
 
 @app.route('/api/conversion/<conversion_id>', methods=['GET'])
 def get_conversion_status(conversion_id):
@@ -175,20 +206,20 @@ def get_conversion_status(conversion_id):
 
 @app.route('/api/download/<filename>', methods=['GET'])
 def download_file(filename):
-    """Download converted file"""
-    filepath = os.path.join(OUTPUT_FOLDER, filename)
-    if not os.path.exists(filepath):
+    """Download converted file from either process"""
+    # Using send_from_directory is safer as it prevents path traversal attacks
+    try:
+        return send_from_directory(OUTPUT_FOLDER, filename, as_attachment=True)
+    except FileNotFoundError:
         return jsonify({'error': 'File not found'}), 404
-    
-    return send_file(filepath, as_attachment=True)
 
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup_files():
     """Clean up old files"""
     try:
         # Clean uploads older than 1 hour
-        for filename in os.listdir(UPLOAD_FOLDER):
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
+        for filename in os.listdir(UPLOAD_folder):
+            filepath = os.path.join(UPLOAD_folder, filename)
             if os.path.getmtime(filepath) < datetime.now().timestamp() - 3600:
                 os.remove(filepath)
         
