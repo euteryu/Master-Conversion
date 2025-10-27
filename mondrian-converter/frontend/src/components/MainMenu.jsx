@@ -1,16 +1,16 @@
+// src/components/MainMenu.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // Import the hook
+import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX } from 'lucide-react';
 
 const MainMenu = ({ stats, volume, setVolume, isMuted, setIsMuted, language, onLanguageChange }) => {
   const navigate = useNavigate();
-  const { t } = useTranslation(); // Initialize the translation function
+  const { t } = useTranslation();
 
   return (
     <div className="h-screen w-screen bg-gray-100 flex items-center justify-center overflow-hidden">
       <style>{`
-        /* ... CSS is the same ... */
         @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
         .title-font { font-family: 'Audiowide', sans-serif; }
         .body-font { font-family: 'Audiowide', sans-serif; }
@@ -27,7 +27,9 @@ const MainMenu = ({ stats, volume, setVolume, isMuted, setIsMuted, language, onL
         <defs>
           <clipPath id="yellowBoxClip"><polygon points="80,120 650,180 620,450 60,380" /></clipPath>
           <clipPath id="blueBoxClip"><polygon points="610,280 1150,310 1140,480 600,450" /></clipPath>
+          <clipPath id="ttsRedBoxClip"><polygon points="500,105 900,120 885,195 490,175" /></clipPath>
         </defs>
+
         <polygon points="20,50 200,80 180,160 20,140" fill="#D21404" stroke="black" strokeWidth="8" className="cursor-pointer hover:brightness-110 transition-all"/>
         <polygon points="20,180 80,185 75,230 20,225" fill="#F7D002" stroke="black" strokeWidth="6" className="cursor-pointer hover:brightness-110 transition-all"/>
         <polygon points="20,550 680,580 650,750 20,720" fill="#D21404" stroke="black" strokeWidth="10" className="cursor-pointer hover:brightness-110 transition-all"/>
@@ -40,8 +42,18 @@ const MainMenu = ({ stats, volume, setVolume, isMuted, setIsMuted, language, onL
         <g clipPath="url(#yellowBoxClip)"><g transform="translate(200, 220) rotate(5)"><g style={{animation: 'pdfCircleBounce 12s ease-in-out infinite'}}><circle cx="80" cy="8" r="45" fill="black" opacity="0.25"/><path d="M 80 -12 L 80 23 M 70 -2 L 80 -12 L 90 -2" stroke="white" strokeWidth="4" fill="none"/></g></g></g>
         <g transform="translate(200, 220) rotate(5)" className="pointer-events-none"><text x="0" y="80" fontSize="52" fontWeight="bold" fill="black" className="title-font">{t('mainMenu.pdfToPpt')}</text><text x="45" y="120" fontSize="24" fill="black" className="body-font">{t('mainMenu.converter')}</text></g>
         <polygon points="320,90 480,100 475,145 315,135" fill="#0047AB" stroke="black" strokeWidth="8"/>
-        <polygon points="500,105 900,120 885,195 490,175" fill="#D21404" stroke="black" strokeWidth="10" className="cursor-pointer hover:brightness-110 transition-all"/>
-        <g transform="translate(640, 148) rotate(1.2)"><text x="0" y="0" fontSize="22" fontWeight="bold" fill="white" className="accent-font">{t('mainMenu.settings.title')}</text></g>
+        
+        <polygon points="500,105 900,120 885,195 490,175" fill="#D21404" stroke="black" strokeWidth="10" className="cursor-pointer hover:brightness-110 transition-all" onClick={() => navigate('/text-to-speech')} />
+        <g clipPath="url(#ttsRedBoxClip)">
+            <g style={{animation: 'bounceAround 10s ease-in-out infinite reverse'}}>
+                <circle cx="600" cy="150" r="25" fill="#FF6347" opacity="0.8"/>
+                <path d="M 600 140 L 600 155 M 593 147 L 600 140 L 607 147" stroke="white" strokeWidth="2.5" fill="none"/>
+            </g>
+        </g>
+        <g transform="translate(690, 155) rotate(1.2)" className="pointer-events-none">
+          <text x="0" y="0" fontSize="36" fontWeight="bold" fill="white" className="accent-font">TTS</text>
+        </g>
+
         <polygon points="950,90 1380,85 1100,200" fill="#F7D002" stroke="black" strokeWidth="8"/>
         <polygon points="610,280 1150,310 1140,480 600,450" fill="#0047AB" stroke="black" strokeWidth="12" className="cursor-pointer hover:brightness-110 transition-all" onClick={() => navigate('/media-machine')}/>
         <g clipPath="url(#blueBoxClip)"><g style={{animation: 'bounceAround 8s ease-in-out infinite'}}><circle cx="875" cy="380" r="35" fill="white" opacity="0.4"/><path d="M 875 360 L 875 395 M 865 370 L 875 360 L 885 370" stroke="black" strokeWidth="3" fill="none" opacity="0.8"/></g></g>
@@ -61,6 +73,7 @@ const MainMenu = ({ stats, volume, setVolume, isMuted, setIsMuted, language, onL
               </div>
               <div style={{ fontFamily: 'Audiowide', color: 'black' }}>
                 <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{t('mainMenu.settings.language')}</label>
+                {/* --- SYNTAX ERROR FIXED HERE --- */}
                 <select value={language} onChange={(e) => onLanguageChange(e.target.value)} className="language-select">
                   <option value="en">English</option>
                   <option value="fr">French</option>

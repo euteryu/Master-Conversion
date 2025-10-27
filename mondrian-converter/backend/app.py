@@ -10,16 +10,16 @@ from backend_conversion import CONVERSION_STRATEGIES
 import subprocess
 import uuid
 import glob
+from gtts import gTTS # <-- NEW IMPORT FOR TEXT-TO-SPEECH
 
 app = Flask(__name__)
 CORS(app)
 
-# --- CONFIGURATION (UPDATED) ---
+# --- CONFIGURATION ---
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'outputs'
 STATS_FILE = 'mondrian_stats.json'
-# Added common video formats to the allowed list
-ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx', 'csv', 'mp4', 'mkv', 'mov', 'avi', 'webm'}
+ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx', 'csv', 'mp4', 'mkv', 'mov', 'avi', 'webm', 'mp3'}
 
 FFMPEG_PATH = os.path.join(os.getcwd(), 'bin')
 
@@ -115,7 +115,6 @@ def download_youtube_video():
         print(f"An unexpected error occurred: {e}")
         return jsonify({'error': 'An unexpected server error occurred.'}), 500
         
-# --- NEW ROUTE FOR LOCAL VIDEO CONVERSION ---
 @app.route('/api/convert-video', methods=['POST'])
 def convert_local_video():
     data = request.get_json()
@@ -138,26 +137,56 @@ def convert_local_video():
     if target_format == 'mp3':
         command.extend(['-vn', '-acodec', 'libmp3lame', '-q:a', '2', output_path])
     else:
-        # General purpose video conversion, copies audio/video streams if possible
         command.extend(['-c:v', 'copy', '-c:a', 'copy', output_path])
-
     try:
         print(f"Executing FFmpeg command: {' '.join(command)}")
-        # We try to copy codecs first. If it fails, we re-encode.
         result = subprocess.run(command, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError:
-        # Fallback to re-encoding if direct copy fails (e.g., mov to mkv might need this)
         print("Codec copy failed, falling back to re-encoding...")
-        command[-3:-1] = [] # Remove the '-c:v copy -c:a copy' part
+        command[-3:-1] = []
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError as e:
             print("FFmpeg Error:", e.stderr)
             return jsonify({'error': 'Conversion failed.', 'details': e.stderr}), 500
-
     print(f"Successfully converted to {output_filename}")
     return jsonify({'message': 'Conversion successful!', 'filename': output_filename})
 
+# --- NEW TEXT-TO-SPEECH ROUTE ---
+@app.route('/api/text-to-speech', methods=['POST'])
+def text_to_speech():
+    data = request.get_json()
+    text = data.get('text')
+    language = data.get('language', 'en')
+    # The 'voice' parameter is received but not used yet, as gTTS has limited voice differentiation
+    # For now, we mainly use the language code.
+    voice = data.get('voice', 'en-female')
+
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+
+    # MVP: Limit to 20 words
+    words = text.split()
+    if len(words) > 20:
+        text = ' '.join(words[:20])
+
+    try:
+        # Create gTTS object
+        tts = gTTS(text=text, lang=language, slow=False)
+
+        # Generate a unique filename
+        unique_id = str(uuid.uuid4())
+        filename = f"{unique_id}.mp3"
+        filepath = os.path.join(OUTPUT_FOLDER, filename)
+
+        # Save the audio file
+        tts.save(filepath)
+        print(f"Successfully created TTS file: {filename}")
+        return jsonify({'message': 'Text-to-speech conversion successful!', 'filename': filename})
+
+    except Exception as e:
+        print(f"Error during TTS conversion: {e}")
+        return jsonify({'error': 'Text-to-speech conversion failed.', 'details': str(e)}), 500
 
 @app.route('/api/convert', methods=['POST'])
 def convert_file():

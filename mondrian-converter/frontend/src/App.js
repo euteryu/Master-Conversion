@@ -1,11 +1,13 @@
+// src/App.js
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
 import MainMenu from './components/MainMenu';
 import PdfToPptConverter from './components/converters/PdfToPptConverter';
 import VideoDownloader from './components/converters/VideoDownloader';
 import YoutubeDownloader from './components/converters/YoutubeDownloader';
 import VideoConverter from './components/converters/VideoConverter';
+import TextToSpeechConverter from './components/converters/TextToSpeechConverter'; // <-- IMPORT NEW COMPONENT
 import { statsService } from './services/statsService';
 
 function App() {
@@ -14,7 +16,6 @@ function App() {
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef(null);
 
-  // --- NEW STATE FOR GLOBAL LANGUAGE CONTROL ---
   const { i18n } = useTranslation();
   const [language, setLanguage] = useState('en');
 
@@ -36,7 +37,6 @@ function App() {
     }
   }, [volume, isMuted]);
 
-  // Function to change the language globally
   const handleLanguageChange = (langCode) => {
     i18n.changeLanguage(langCode);
     setLanguage(langCode);
@@ -55,10 +55,14 @@ function App() {
             isMuted={isMuted}
             setIsMuted={setIsMuted}
             language={language}
-            onLanguageChange={handleLanguageChange} // Pass the function
+            onLanguageChange={handleLanguageChange}
           />} 
         />
         <Route path="/pdf-to-ppt" element={<PdfToPptConverter />} />
+        
+        {/* --- NEW ROUTE ADDED --- */}
+        <Route path="/text-to-speech" element={<TextToSpeechConverter />} />
+
         <Route path="/media-machine" element={<VideoDownloader />} />
         <Route path="/media-machine/convert-media" element={<VideoConverter />} /> 
         <Route path="/media-machine/download-youtube" element={<YoutubeDownloader />} />
