@@ -1,6 +1,6 @@
-// src/App.js
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import MainMenu from './components/MainMenu';
 import PdfToPptConverter from './components/converters/PdfToPptConverter';
 import VideoDownloader from './components/converters/VideoDownloader';
@@ -10,11 +10,13 @@ import { statsService } from './services/statsService';
 
 function App() {
   const [stats, setStats] = useState({ usage_count: 0, last_opened: 'Never' });
-  
-  // --- NEW STATE FOR GLOBAL AUDIO CONTROL ---
-  const [volume, setVolume] = useState(50); // Volume from 0 to 100
+  const [volume, setVolume] = useState(50);
   const [isMuted, setIsMuted] = useState(false);
-  const audioRef = useRef(null); // Ref to directly control the audio element
+  const audioRef = useRef(null);
+
+  // --- NEW STATE FOR GLOBAL LANGUAGE CONTROL ---
+  const { i18n } = useTranslation();
+  const [language, setLanguage] = useState('en');
 
   useEffect(() => {
     statsService.incrementUsage()
@@ -22,30 +24,28 @@ function App() {
       .catch(err => console.error('Failed to load stats:', err));
   }, []);
 
-  // Effect to handle audio playback and volume changes
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) {
-      audio.volume = volume / 100; // HTML audio volume is 0.0 to 1.0
+      audio.volume = volume / 100;
       audio.muted = isMuted;
-
-      // Attempt to play audio, handling browser autoplay restrictions
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.log("Audio autoplay was prevented. User must interact with the page first.");
-        });
+        playPromise.catch(error => console.log("Audio autoplay was prevented."));
       }
     }
   }, [volume, isMuted]);
 
+  // Function to change the language globally
+  const handleLanguageChange = (langCode) => {
+    i18n.changeLanguage(langCode);
+    setLanguage(langCode);
+  };
+
   return (
     <BrowserRouter>
-      {/* --- NEW AUDIO ELEMENT --- */}
       <audio ref={audioRef} src="/music/background.mp3" loop />
-
       <Routes>
-        {/* Pass audio state and setters to the Main Menu */}
         <Route 
           path="/" 
           element={<MainMenu 
@@ -54,12 +54,11 @@ function App() {
             setVolume={setVolume}
             isMuted={isMuted}
             setIsMuted={setIsMuted}
+            language={language}
+            onLanguageChange={handleLanguageChange} // Pass the function
           />} 
         />
-        
         <Route path="/pdf-to-ppt" element={<PdfToPptConverter />} />
-        
-        {/* Media Machine Routes */}
         <Route path="/media-machine" element={<VideoDownloader />} />
         <Route path="/media-machine/convert-media" element={<VideoConverter />} /> 
         <Route path="/media-machine/download-youtube" element={<YoutubeDownloader />} />

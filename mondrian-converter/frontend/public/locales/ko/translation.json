@@ -1,0 +1,55 @@
+{
+  "mainMenu": {
+    "title": "몬드리안 변환기",
+    "launches": "실행 횟수: {{count}}",
+    "lastOpened": "마지막 실행: {{date}}",
+    "pdfToPpt": "PDF를 PPT로",
+    "converter": "변환기",
+    "videoDownloader": "비디오 다운로더",
+    "settings": {
+      "title": "설정",
+      "music": "배경 음악",
+      "language": "언어:"
+    }
+  },
+  "videoDownloader": {
+    "title": "미디어 머신",
+    "back": "뒤로",
+    "convertVideo": "비디오 변환",
+    "orYoutube": "또는 YouTube",
+    "mp3Extraction": "mp3 추출 포함"
+  },
+  "youtubeDownloader": {
+    "title": "YOUTUBE 다운로드",
+    "back": "뒤로",
+    "placeholder": "여기에 입력하거나 붙여넣으세요",
+    "processing": "처리 중...",
+    "errorTitle": "오류",
+    "tryAgain": "다시 시도",
+    "ready": "파일이 준비되었습니다!",
+    "downloadFile": "파일 다운로드",
+    "downloadAnother": "다른 파일 다운로드",
+    "formats": {
+      "mp4": "MP4 - 비디오",
+      "mkv": "MKV - 비디오",
+      "mp3": "MP3 오디오만",
+      "default": "기본값"
+    }
+  },
+  "videoConverter": {
+    "title": "비디오 변환",
+    "back": "뒤로",
+    "dropzone": "드래그 앤 드롭 또는 클릭",
+    "chooseFile": "파일 선택",
+    "currentFormat": "현재 형식: {{format}}",
+    "uploading": "업로드 중...",
+    "converting": "변환 중...",
+    "success": "변환 완료!",
+    "downloadFile": "파일 다운로드",
+    "convertAnother": "다른 파일 변환",
+    "errorTitle": "오류",
+    "tryAgain": "다시 시도",
+    "outputFormat": "출력 형식 선택:",
+    "convert": "변환"
+  }
+}

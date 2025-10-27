@@ -1,0 +1,55 @@
+{
+  "mainMenu": {
+    "title": "CONVERTISSEUR MONDRIAN",
+    "launches": "Lancements : {{count}}",
+    "lastOpened": "Dernier : {{date}}",
+    "pdfToPpt": "PDF VERS PPT",
+    "converter": "CONVERTISSEUR",
+    "videoDownloader": "TÉLÉCHARGEUR VIDÉO",
+    "settings": {
+      "title": "PARAMÈTRES",
+      "music": "musique de fond",
+      "language": "Langue :"
+    }
+  },
+  "videoDownloader": {
+    "title": "MACHINE MÉDIA",
+    "back": "retour",
+    "convertVideo": "CONVERTIR VIDÉO",
+    "orYoutube": "Ou YouTube",
+    "mp3Extraction": "incl. extraction mp3"
+  },
+  "youtubeDownloader": {
+    "title": "TÉLÉCHARGER YOUTUBE",
+    "back": "Retour",
+    "placeholder": "TAPEZ OU COLLEZ ICI",
+    "processing": "TRAITEMENT...",
+    "errorTitle": "ERREUR",
+    "tryAgain": "RÉESSAYER",
+    "ready": "Votre fichier est prêt !",
+    "downloadFile": "TÉLÉCHARGER LE FICHIER",
+    "downloadAnother": "Télécharger un autre",
+    "formats": {
+      "mp4": "MP4 - VIDÉO",
+      "mkv": "MKV - VIDÉO",
+      "mp3": "MP3 AUDIO SEULEMENT",
+      "default": "DÉFAUT"
+    }
+  },
+  "videoConverter": {
+    "title": "CONVERTIR LA VIDÉO",
+    "back": "Retour",
+    "dropzone": "GLISSER-DÉPOSER OU CLIQUER",
+    "chooseFile": "CHOISIR LE FICHIER",
+    "currentFormat": "FORMAT ACTUEL : {{format}}",
+    "uploading": "Téléchargement...",
+    "converting": "CONVERSION...",
+    "success": "CONVERSION TERMINÉE !",
+    "downloadFile": "TÉLÉCHARGER LE FICHIER",
+    "convertAnother": "Convertir un autre",
+    "errorTitle": "ERREUR",
+    "tryAgain": "RÉESSAYER",
+    "outputFormat": "CHOISIR LE FORMAT DE SORTIE :",
+    "convert": "CONVERTIR"
+  }
+}

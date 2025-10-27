@@ -1,0 +1,55 @@
+{
+  "mainMenu": {
+    "title": "MONDRIAN CONVERTER",
+    "launches": "Launches: {{count}}",
+    "lastOpened": "Last: {{date}}",
+    "pdfToPpt": "PDF TO PPT",
+    "converter": "CONVERTER",
+    "videoDownloader": "VIDEO DOWNLOADER",
+    "settings": {
+      "title": "SETTINGS",
+      "music": "background music",
+      "language": "Language:"
+    }
+  },
+  "videoDownloader": {
+    "title": "MEDIA MACHINE",
+    "back": "back",
+    "convertVideo": "CONVERT VIDEO",
+    "orYoutube": "Or YouTube",
+    "mp3Extraction": "incl. mp3 extraction"
+  },
+  "youtubeDownloader": {
+    "title": "DOWNLOAD YOUTUBE",
+    "back": "Back",
+    "placeholder": "TYPE OR PASTE HERE",
+    "processing": "PROCESSING...",
+    "errorTitle": "ERROR",
+    "tryAgain": "TRY AGAIN",
+    "ready": "Your file is ready!",
+    "downloadFile": "DOWNLOAD FILE",
+    "downloadAnother": "Download another",
+    "formats": {
+      "mp4": "MP4 - VIDEO",
+      "mkv": "MKV - VIDEO",
+      "mp3": "MP3 AUDIO ONLY",
+      "default": "DEFAULT"
+    }
+  },
+  "videoConverter": {
+    "title": "CONVERT VIDEO",
+    "back": "Back",
+    "dropzone": "DRAG-N-DROP OR CLICK",
+    "chooseFile": "CHOOSE FILE",
+    "currentFormat": "CURRENT FORMAT: {{format}}",
+    "uploading": "Uploading...",
+    "converting": "CONVERTING...",
+    "success": "CONVERSION COMPLETE!",
+    "downloadFile": "DOWNLOAD FILE",
+    "convertAnother": "Convert another",
+    "errorTitle": "ERROR",
+    "tryAgain": "TRY AGAIN",
+    "outputFormat": "CHOOSE OUTPUT FORMAT:",
+    "convert": "CONVERT"
+  }
+}
