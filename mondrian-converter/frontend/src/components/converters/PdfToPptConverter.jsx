@@ -1,5 +1,5 @@
 // src/components/converters/PdfToPptConverter.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import { conversionService } from '../../services/conversionService';
@@ -7,8 +7,8 @@ import { conversionService } from '../../services/conversionService';
 const PdfToPptConverter = () => {
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
-  const [converting, setConverting] = useState(false);
-  const [conversions, setConversions] = useState({});
+  // const [converting, setConverting] = useState(false);
+  // const [conversions, setConversions] = useState({});
   const [dragging, setDragging] = useState(false);
   const dropZoneRef = useRef(null);
 

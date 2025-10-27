@@ -22,10 +22,12 @@ OUTPUT_FOLDER = 'outputs'
 STATS_FILE = 'mondrian_stats.json'
 ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx', 'csv', 'mp4', 'mkv', 'mov', 'avi', 'webm', 'mp3'}
 FFMPEG_PATH = os.path.join(os.getcwd(), 'bin')
+VOICES_FOLDER = 'voices'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(FFMPEG_PATH, exist_ok=True)
+os.makedirs(VOICES_FOLDER, exist_ok=True)
 
 active_conversions = {}
 
@@ -61,7 +63,7 @@ def upload_file():
     if file.filename == '': return jsonify({'error': 'No file selected'}), 400
     if not allowed_file(file.filename): return jsonify({'error': 'Invalid file type'}), 400
     filename = secure_filename(file.filename)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H:%M%S")
     unique_filename = f"{timestamp}_{filename}"
     filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
     file.save(filepath)
@@ -69,7 +71,6 @@ def upload_file():
 
 @app.route('/api/download-youtube', methods=['POST'])
 def download_youtube_video():
-    # This function remains unchanged and complete
     data = request.get_json()
     url = data.get('url')
     format_choice = data.get('format')
@@ -100,6 +101,7 @@ def download_youtube_video():
         output_path = os.path.join(OUTPUT_FOLDER, filename)
         command.extend(['-f', best_quality_video, '--merge-output-format', 'mp4', '--postprocessor-args', 'Merger:-c:a aac', '-o', output_path, url])
     try:
+        # --- THIS IS THE CORRECTED LINE ---
         subprocess.run(command, check=True, capture_output=True, text=True)
         if filename is None:
             search_pattern = os.path.join(OUTPUT_FOLDER, f"{unique_id}.*")
@@ -114,7 +116,6 @@ def download_youtube_video():
         
 @app.route('/api/convert-video', methods=['POST'])
 def convert_local_video():
-    # This function remains unchanged and complete
     data = request.get_json()
     input_filename = data.get('filename')
     target_format = data.get('targetFormat')
@@ -139,14 +140,11 @@ def convert_local_video():
             return jsonify({'error': 'Conversion failed.', 'details': e.stderr}), 500
     return jsonify({'message': 'Conversion successful!', 'filename': output_filename})
 
-# --- NEW ENDPOINT JUST FOR EXTRACTING TEXT ---
 @app.route('/api/extract-text-from-url', methods=['POST'])
 def extract_text_from_url():
     data = request.get_json()
     url = data.get('url')
-    if not url:
-        return jsonify({'error': 'No URL provided'}), 400
-    
+    if not url: return jsonify({'error': 'No URL provided'}), 400
     try:
         downloaded = trafilatura.fetch_url(url)
         if downloaded:
@@ -157,43 +155,71 @@ def extract_text_from_url():
     except Exception as e:
         return jsonify({'error': 'Failed to parse the article from the URL.', 'details': str(e)}), 500
 
-# --- SIMPLIFIED TEXT-TO-SPEECH ENDPOINT ---
 @app.route('/api/text-to-speech', methods=['POST'])
 def text_to_speech():
     data = request.get_json()
     text = data.get('text')
     language = data.get('language', 'en')
     voice = data.get('voice', 'en-female')
-    
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
-
-    # --- UPDATED WORD LIMIT ---
+    if not text: return jsonify({'error': 'No text provided'}), 400
     words = text.split()
     final_text = ' '.join(words[:2000])
-
     try:
         tts = gTTS(text=final_text, lang=language, slow=False)
         unique_id = str(uuid.uuid4())
         filename = f"{unique_id}.mp3"
         filepath = os.path.join(OUTPUT_FOLDER, filename)
         tts.save(filepath)
-        
         return jsonify({'message': 'TTS conversion successful!', 'filename': filename})
     except Exception as e:
         return jsonify({'error': 'Text-to-speech conversion failed.', 'details': str(e)}), 500
 
 @app.route('/api/convert', methods=['POST'])
 def convert_file():
-    # This function remains unchanged and complete
-    # ...
-    pass
+    data = request.json
+    input_filename = data.get('filename')
+    from_format = data.get('from_format', 'PDF')
+    to_format = data.get('to_format', 'PPT')
+    mode = data.get('mode', 'Hybrid (Editable Text)')
+    quality = data.get('quality', 'good')
+    quality_map = {'fast': 96, 'good': 120, 'high': 150}
+    dpi = quality_map.get(quality, 120)
+    mode_map = {'hybrid': 'Hybrid (Editable Text)', 'image': 'Image Only (Flattened)'}
+    strategy_mode = mode_map.get(mode, 'Hybrid (Editable Text)')
+    input_path = os.path.join(UPLOAD_FOLDER, input_filename)
+    if not os.path.exists(input_path): return jsonify({'error': 'Input file not found'}), 404
+    base_name = os.path.splitext(input_filename)[0]
+    output_extension = '.pptx' if to_format == 'PPT' else f'.{to_format.lower()}'
+    output_filename = f"{base_name}_converted{output_extension}"
+    output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+    strategy_key = (from_format, to_format, strategy_mode)
+    conversion_function = CONVERSION_STRATEGIES.get(strategy_key)
+    if not conversion_function: return jsonify({'error': f'Conversion from {from_format} to {to_format} not supported'}), 400
+    conversion_id = f"{datetime.now().timestamp()}"
+    active_conversions[conversion_id] = {'status': 'processing', 'progress': 0, 'total': 0, 'output_file': output_filename}
+    def progress_callback(current, total):
+        active_conversions[conversion_id]['progress'] = current
+        active_conversions[conversion_id]['total'] = total
+    def run_conversion():
+        try:
+            error = conversion_function(input_path, output_path, progress_callback, dpi=dpi)
+            if error:
+                active_conversions[conversion_id]['status'] = 'error'
+                active_conversions[conversion_id]['error'] = error
+            else:
+                active_conversions[conversion_id]['status'] = 'completed'
+                active_conversions[conversion_id]['progress'] = active_conversions[conversion_id]['total']
+        except Exception as e:
+            active_conversions[conversion_id]['status'] = 'error'
+            active_conversions[conversion_id]['error'] = str(e)
+    thread = threading.Thread(target=run_conversion, daemon=True)
+    thread.start()
+    return jsonify({'success': True, 'conversion_id': conversion_id})
 
 @app.route('/api/conversion/<conversion_id>', methods=['GET'])
 def get_conversion_status(conversion_id):
-    # This function remains unchanged and complete
-    # ...
-    pass
+    if conversion_id not in active_conversions: return jsonify({'error': 'Conversion not found'}), 404
+    return jsonify(active_conversions[conversion_id])
 
 @app.route('/api/download/<filename>', methods=['GET'])
 def download_file(filename):
@@ -204,9 +230,16 @@ def download_file(filename):
 
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup_files():
-    # This function remains unchanged and complete
-    # ...
-    pass
+    try:
+        for filename in os.listdir(UPLOAD_FOLDER):
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.getmtime(filepath) < datetime.now().timestamp() - 3600: os.remove(filepath)
+        for filename in os.listdir(OUTPUT_FOLDER):
+            filepath = os.path.join(OUTPUT_FOLDER, filename)
+            if os.path.getmtime(filepath) < datetime.now().timestamp() - 86400: os.remove(filepath)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
