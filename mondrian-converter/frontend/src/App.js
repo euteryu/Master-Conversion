@@ -1,13 +1,14 @@
 // src/App.js
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// --- CHANGE THIS LINE ---
+import { HashRouter, Routes, Route } from 'react-router-dom'; // Use HashRouter instead of BrowserRouter
 import { useTranslation } from 'react-i18next';
 import MainMenu from './components/MainMenu';
 import PdfToPptConverter from './components/converters/PdfToPptConverter';
 import VideoDownloader from './components/converters/VideoDownloader';
 import YoutubeDownloader from './components/converters/YoutubeDownloader';
 import VideoConverter from './components/converters/VideoConverter';
-import TextToSpeechConverter from './components/converters/TextToSpeechConverter'; // <-- IMPORT NEW COMPONENT
+import TextToSpeechConverter from './components/converters/TextToSpeechConverter';
 import { statsService } from './services/statsService';
 
 function App() {
@@ -43,8 +44,9 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <audio ref={audioRef} src="/music/background.mp3" loop />
+    // --- AND CHANGE THIS LINE ---
+    <HashRouter>
+      <audio ref={audioRef} src="music/background.mp3" loop />
       <Routes>
         <Route 
           path="/" 
@@ -59,15 +61,12 @@ function App() {
           />} 
         />
         <Route path="/pdf-to-ppt" element={<PdfToPptConverter />} />
-        
-        {/* --- NEW ROUTE ADDED --- */}
         <Route path="/text-to-speech" element={<TextToSpeechConverter />} />
-
         <Route path="/media-machine" element={<VideoDownloader />} />
         <Route path="/media-machine/convert-media" element={<VideoConverter />} /> 
         <Route path="/media-machine/download-youtube" element={<YoutubeDownloader />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

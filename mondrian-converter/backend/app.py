@@ -1,4 +1,5 @@
 # Save this file as app.py
+import sys
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -16,13 +17,25 @@ import trafilatura
 app = Flask(__name__)
 CORS(app)
 
+# --- NEW: Logic to determine the base path at runtime ---
+# This is CRITICAL for the packaged .exe to find its files.
+if getattr(sys, 'frozen', False):
+    # If the application is run as a bundle (e.g., by PyInstaller)
+    base_path = sys._MEIPASS
+else:
+    # If run in a normal Python environment
+    base_path = os.path.dirname(os.path.abspath(__file__))
+
 # --- CONFIGURATION ---
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'outputs'
-STATS_FILE = 'mondrian_stats.json'
+# --- UPDATE FOLDER PATHS to use the base_path ---
+UPLOAD_FOLDER = os.path.join(base_path, 'uploads')
+OUTPUT_FOLDER = os.path.join(base_path, 'outputs')
+FFMPEG_PATH = os.path.join(base_path, 'bin')
+VOICES_FOLDER = os.path.join(base_path, 'voices')
+# Stats file can be placed next to the executable
+STATS_FILE = os.path.join(os.path.dirname(sys.executable), 'mondrian_stats.json') if getattr(sys, 'frozen', False) else 'mondrian_stats.json'
+
 ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx', 'csv', 'mp4', 'mkv', 'mov', 'avi', 'webm', 'mp3'}
-FFMPEG_PATH = os.path.join(os.getcwd(), 'bin')
-VOICES_FOLDER = 'voices'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)

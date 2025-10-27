@@ -1,6 +1,62 @@
 {
+  "name": "mondrian-converter",
+  "version": "1.0.0",
+  "description": "A suite of media conversion tools.",
+  "main": "electron/main.js",
+  "author": "Your Name",
+  "scripts": {
+    "start": "concurrently \"npm:start:react\" \"npm:start:electron\"",
+    "start:react": "cd frontend && npm start",
+    "start:electron": "electron .",
+    "build": "npm run build:react && npm run build:py && electron-builder",
+    "build:react": "cd frontend && npm install && npm run build",
+    "build:py": "cd backend && pyinstaller --noconfirm --onedir --windowed --name=\"mondrian_backend\" --add-data \"backend_conversion.py;.\" --add-data \"..\\..\\conversion\\Lib\\site-packages\\dateparser\\data;dateparser/data\" app.py",
+    "pack": "electron-builder --win"
+  },
   "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "electron": "^38.4.0",
     "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.yourcompany.mondrianconverter",
+    "productName": "Mondrian Converter",
+    "copyright": "Copyright © 2025 Your Name",
+    "files": [
+      "electron/**/*",
+      "frontend/build/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/dist/mondrian_backend",
+        "to": "backend"
+      },
+      {
+        "from": "backend/bin",
+        "to": "backend/bin"
+      },
+      {
+        "from": "backend/voices",
+        "to": "backend/voices"
+      }
+    ],
+    "asarUnpack": [
+      "**/backend/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "frontend/public/icon.ico",
+      "uninstallerIcon": "frontend/public/icon.ico",
+      "installerHeaderIcon": "frontend/public/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

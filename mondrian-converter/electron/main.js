@@ -2,37 +2,48 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const fs = require('fs');
 
 let backendProcess = null;
+const logFilePath = path.join(app.getPath('userData'), 'app-log.txt');
+fs.writeFileSync(logFilePath, `App started at ${new Date().toISOString()}\n`);
 
-// Function to start the Python backend executable
 function startBackend() {
-  const isDev = process.env.NODE_ENV !== 'production';
+  // --- THIS IS THE FIX: Use app.isPackaged for 100% reliability ---
+  const isPackaged = app.isPackaged;
+  
   let backendPath;
-
-  if (isDev) {
-    // In development, we run the .py script directly
-    // This assumes your Python executable is in your PATH
+  if (!isPackaged) {
+    // --- DEVELOPMENT PATH ---
+    // Running in development mode (e.g., with `npm start`)
+    fs.appendFileSync(logFilePath, 'Running in Development mode.\n');
     backendPath = "python";
     const scriptPath = path.join(__dirname, '..', 'backend', 'app.py');
     backendProcess = spawn(backendPath, [scriptPath]);
   } else {
-    // In production, we run the packaged .exe
-    // 'extraResources' in package.json ensures the backend folder is available
+    // --- PRODUCTION PATH ---
+    // Running from the packaged, installed application
     backendPath = path.join(process.resourcesPath, 'backend', 'mondrian_backend.exe');
+    fs.appendFileSync(logFilePath, `Running in Production mode. Attempting to start backend from: ${backendPath}\n`);
     backendProcess = spawn(backendPath);
   }
 
   backendProcess.stdout.on('data', (data) => {
-    console.log(`Backend stdout: ${data}`);
+    const message = `Backend stdout: ${data}\n`;
+    console.log(message);
+    fs.appendFileSync(logFilePath, message);
   });
   
   backendProcess.stderr.on('data', (data) => {
-    console.error(`Backend stderr: ${data}`);
+    const message = `Backend stderr: ${data}\n`;
+    console.error(message);
+    fs.appendFileSync(logFilePath, message);
   });
 
   backendProcess.on('close', (code) => {
-    console.log(`Backend process exited with code ${code}`);
+    const message = `Backend process exited with code ${code}\n`;
+    console.log(message);
+    fs.appendFileSync(logFilePath, message);
   });
 }
 
@@ -46,29 +57,26 @@ function createWindow() {
     },
   });
 
-  // Load the built React app
-  const startUrl = path.join(__dirname, '../frontend/build/index.html');
-  mainWindow.loadFile(startUrl);
+  // This path logic is now also more robust.
+  const startUrl = app.isPackaged
+    ? `file://${path.join(__dirname, '../frontend/build/index.html')}`
+    : `http://localhost:3000`; // In dev, we can point to the React dev server
+
+  mainWindow.loadURL(startUrl);
+  mainWindow.setMenu(null);
+  
+  // Keep DevTools open for now
+  mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
   startBackend();
   createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
 });
 
-// Gracefully kill the backend process when the app is closed
 app.on('window-all-closed', () => {
   if (backendProcess) {
-    console.log('Killing backend process...');
     backendProcess.kill();
   }
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });
