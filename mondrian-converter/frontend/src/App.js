@@ -5,6 +5,7 @@ import MainMenu from './components/MainMenu';
 import PdfToPptConverter from './components/converters/PdfToPptConverter';
 import VideoDownloader from './components/converters/VideoDownloader';
 import YoutubeDownloader from './components/converters/YoutubeDownloader';
+import VideoConverter from './components/converters/VideoConverter'; // <-- IMPORT NEW COMPONENT
 import { statsService } from './services/statsService';
 
 function App() {
@@ -19,16 +20,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main Menu Route */}
         <Route path="/" element={<MainMenu stats={stats} />} />
-        
-        {/* PDF to PPT Converter Route */}
         <Route path="/pdf-to-ppt" element={<PdfToPptConverter />} />
         
         {/* Media Machine Routes */}
         <Route path="/media-machine" element={<VideoDownloader />} />
-        <Route path="/media-machine/convert-media" element={<div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '2rem', fontFamily: 'Audiowide, sans-serif'}}>Convert Media - Coming Soon</div>} />
-        {/* Updated route to use the new component */}
+        <Route path="/media-machine/convert-media" element={<VideoConverter />} /> 
         <Route path="/media-machine/download-youtube" element={<YoutubeDownloader />} />
       </Routes>
     </BrowserRouter>
