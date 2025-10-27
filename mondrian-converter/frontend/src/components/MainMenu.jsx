@@ -50,7 +50,8 @@ const MainMenu = ({ stats, volume, setVolume, isMuted, setIsMuted, language, onL
                 <path d="M 600 140 L 600 155 M 593 147 L 600 140 L 607 147" stroke="white" strokeWidth="2.5" fill="none"/>
             </g>
         </g>
-        <g transform="translate(690, 155) rotate(1.2)" className="pointer-events-none">
+        {/* --- TEXT RE-CENTERED --- */}
+        <g transform="translate(650, 155) rotate(1.2)" className="pointer-events-none">
           <text x="0" y="0" fontSize="36" fontWeight="bold" fill="white" className="accent-font">TTS</text>
         </g>
 
@@ -73,7 +74,6 @@ const MainMenu = ({ stats, volume, setVolume, isMuted, setIsMuted, language, onL
               </div>
               <div style={{ fontFamily: 'Audiowide', color: 'black' }}>
                 <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{t('mainMenu.settings.language')}</label>
-                {/* --- SYNTAX ERROR FIXED HERE --- */}
                 <select value={language} onChange={(e) => onLanguageChange(e.target.value)} className="language-select">
                   <option value="en">English</option>
                   <option value="fr">French</option>
