@@ -8,6 +8,8 @@ import json
 from datetime import datetime
 import threading
 from backend_conversion import CONVERSION_STRATEGIES
+# --- NEW SLIDER MODULE IMPORTS ---
+from backend_ai_generator import generate_presentation
 import subprocess
 import uuid
 import glob
@@ -17,32 +19,34 @@ import trafilatura
 app = Flask(__name__)
 CORS(app)
 
-# --- NEW: Logic to determine the base path at runtime ---
-# This is CRITICAL for the packaged .exe to find its files.
 if getattr(sys, 'frozen', False):
-    # If the application is run as a bundle (e.g., by PyInstaller)
     base_path = sys._MEIPASS
 else:
-    # If run in a normal Python environment
     base_path = os.path.dirname(os.path.abspath(__file__))
 
 # --- CONFIGURATION ---
-# --- UPDATE FOLDER PATHS to use the base_path ---
 UPLOAD_FOLDER = os.path.join(base_path, 'uploads')
 OUTPUT_FOLDER = os.path.join(base_path, 'outputs')
 FFMPEG_PATH = os.path.join(base_path, 'bin')
 VOICES_FOLDER = os.path.join(base_path, 'voices')
-# Stats file can be placed next to the executable
+# --- NEW: Templates folder for Slider module ---
+TEMPLATES_FOLDER = os.path.join(base_path, 'templates')
 STATS_FILE = os.path.join(os.path.dirname(sys.executable), 'mondrian_stats.json') if getattr(sys, 'frozen', False) else 'mondrian_stats.json'
 
 ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'doc', 'docx', 'csv', 'mp4', 'mkv', 'mov', 'avi', 'webm', 'mp3'}
 
+# --- CREATE FOLDERS ---
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(FFMPEG_PATH, exist_ok=True)
 os.makedirs(VOICES_FOLDER, exist_ok=True)
+os.makedirs(TEMPLATES_FOLDER, exist_ok=True)
 
+# --- IN-MEMORY STATE MANAGEMENT ---
 active_conversions = {}
+# --- NEW: Dictionary for active AI generations ---
+active_generations = {}
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -76,7 +80,7 @@ def upload_file():
     if file.filename == '': return jsonify({'error': 'No file selected'}), 400
     if not allowed_file(file.filename): return jsonify({'error': 'Invalid file type'}), 400
     filename = secure_filename(file.filename)
-    timestamp = datetime.now().strftime("%Y%m%d_%H:%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H:%M:%S")
     unique_filename = f"{timestamp}_{filename}"
     filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
     file.save(filepath)
@@ -114,7 +118,6 @@ def download_youtube_video():
         output_path = os.path.join(OUTPUT_FOLDER, filename)
         command.extend(['-f', best_quality_video, '--merge-output-format', 'mp4', '--postprocessor-args', 'Merger:-c:a aac', '-o', output_path, url])
     try:
-        # --- THIS IS THE CORRECTED LINE ---
         subprocess.run(command, check=True, capture_output=True, text=True)
         if filename is None:
             search_pattern = os.path.join(OUTPUT_FOLDER, f"{unique_id}.*")
@@ -191,40 +194,56 @@ def text_to_speech():
 def convert_file():
     data = request.json
     input_filename = data.get('filename')
-    from_format = data.get('from_format', 'PDF')
-    to_format = data.get('to_format', 'PPT')
-    mode = data.get('mode', 'Hybrid (Editable Text)')
-    quality = data.get('quality', 'good')
-    quality_map = {'fast': 96, 'good': 120, 'high': 150}
-    dpi = quality_map.get(quality, 120)
-    mode_map = {'hybrid': 'Hybrid (Editable Text)', 'image': 'Image Only (Flattened)'}
-    strategy_mode = mode_map.get(mode, 'Hybrid (Editable Text)')
+    
     input_path = os.path.join(UPLOAD_FOLDER, input_filename)
-    if not os.path.exists(input_path): return jsonify({'error': 'Input file not found'}), 404
+    if not os.path.exists(input_path):
+        return jsonify({'error': 'Input file not found'}), 404
+
     base_name = os.path.splitext(input_filename)[0]
-    output_extension = '.pptx' if to_format == 'PPT' else f'.{to_format.lower()}'
-    output_filename = f"{base_name}_converted{output_extension}"
+    conversion_function = None
+    output_filename = ""
+    
+    # --- INTELLIGENT DISPATCHER LOGIC ---
+    if input_filename.lower().endswith('.pdf'):
+        output_filename = f"{base_name}_converted.pptx"
+        conversion_function = CONVERSION_STRATEGIES.get('pdf_to_ppt')
+    elif input_filename.lower().endswith(('.ppt', '.pptx')):
+        output_filename = f"{base_name}_converted.pdf"
+        conversion_function = CONVERSION_STRATEGIES.get('ppt_to_pdf')
+    else:
+        return jsonify({'error': 'Unsupported file type for this converter.'}), 400
+
     output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-    strategy_key = (from_format, to_format, strategy_mode)
-    conversion_function = CONVERSION_STRATEGIES.get(strategy_key)
-    if not conversion_function: return jsonify({'error': f'Conversion from {from_format} to {to_format} not supported'}), 400
-    conversion_id = f"{datetime.now().timestamp()}"
+    
+    if not conversion_function:
+        return jsonify({'error': 'Internal error: No conversion strategy found.'}), 500
+
+    conversion_id = str(uuid.uuid4())
     active_conversions[conversion_id] = {'status': 'processing', 'progress': 0, 'total': 0, 'output_file': output_filename}
-    def progress_callback(current, total):
+    
+    def progress_callback(current, total, message="Converting..."): # Add message for future use
         active_conversions[conversion_id]['progress'] = current
         active_conversions[conversion_id]['total'] = total
+        active_conversions[conversion_id]['message'] = message
+
     def run_conversion():
         try:
-            error = conversion_function(input_path, output_path, progress_callback, dpi=dpi)
+            # Note: The PDF function takes an extra 'dpi' argument which PPT does not.
+            if input_filename.lower().endswith('.pdf'):
+                error = conversion_function(input_path, output_path, progress_callback, dpi=150)
+            else:
+                error = conversion_function(input_path, output_path, progress_callback)
+
             if error:
                 active_conversions[conversion_id]['status'] = 'error'
                 active_conversions[conversion_id]['error'] = error
             else:
                 active_conversions[conversion_id]['status'] = 'completed'
-                active_conversions[conversion_id]['progress'] = active_conversions[conversion_id]['total']
+                active_conversions[conversion_id]['progress'] = active_conversions[conversion_id].get('total', 1)
         except Exception as e:
             active_conversions[conversion_id]['status'] = 'error'
             active_conversions[conversion_id]['error'] = str(e)
+
     thread = threading.Thread(target=run_conversion, daemon=True)
     thread.start()
     return jsonify({'success': True, 'conversion_id': conversion_id})
@@ -233,6 +252,64 @@ def convert_file():
 def get_conversion_status(conversion_id):
     if conversion_id not in active_conversions: return jsonify({'error': 'Conversion not found'}), 404
     return jsonify(active_conversions[conversion_id])
+    
+# --- NEW SLIDER MODULE ENDPOINTS ---
+
+@app.route('/api/generate-slides', methods=['POST'])
+def generate_slides_endpoint():
+    data = request.json
+    prompt = data.get('prompt')
+    output_format = data.get('outputFormat', 'powerpoint')
+    theme = data.get('theme', 'Revision Theme')
+
+    if not prompt:
+        return jsonify({'error': 'Prompt is required'}), 400
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_filename = f"ai_generated_{timestamp}.pptx"
+    output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+    
+    generation_id = str(uuid.uuid4())
+    active_generations[generation_id] = {
+        'status': 'processing', 
+        'progress': 0, 
+        'total': 4, 
+        'message': 'Initializing...',
+        'output_file': output_filename,
+        'error': None
+    }
+
+    def progress_callback(current, total, message):
+        if generation_id in active_generations:
+            active_generations[generation_id]['progress'] = current
+            active_generations[generation_id]['total'] = total
+            active_generations[generation_id]['message'] = message
+        
+    def run_generation():
+        try:
+            error = generate_presentation(prompt, output_format, theme, output_path, TEMPLATES_FOLDER, progress_callback)
+            if error:
+                active_generations[generation_id]['status'] = 'error'
+                active_generations[generation_id]['error'] = error
+            else:
+                active_generations[generation_id]['status'] = 'completed'
+                active_generations[generation_id]['message'] = 'Generation complete!'
+                active_generations[generation_id]['progress'] = active_generations[generation_id].get('total', 4)
+        except Exception as e:
+            active_generations[generation_id]['status'] = 'error'
+            active_generations[generation_id]['error'] = str(e)
+            
+    thread = threading.Thread(target=run_generation, daemon=True)
+    thread.start()
+    
+    return jsonify({'success': True, 'generation_id': generation_id})
+
+@app.route('/api/generation-status/<generation_id>', methods=['GET'])
+def get_generation_status(generation_id):
+    if generation_id not in active_generations:
+        return jsonify({'error': 'Generation job not found'}), 404
+    return jsonify(active_generations[generation_id])
+
 
 @app.route('/api/download/<filename>', methods=['GET'])
 def download_file(filename):
@@ -255,4 +332,5 @@ def cleanup_files():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
+    print("Please ensure the Ollama application is running in the background.")
     app.run(debug=True, port=5000)

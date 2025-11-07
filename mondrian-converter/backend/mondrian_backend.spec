@@ -5,7 +5,7 @@ a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[('backend_conversion.py', '.'), ('..\\..\\conversion\\Lib\\site-packages\\dateparser\\data', 'dateparser/data')],
+    datas=[('templates', 'templates'), ('C:\\Users\\minse\\Desktop\\Scripts\\conversion\\Lib\\site-packages\\dateparser\\data', 'dateparser/data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

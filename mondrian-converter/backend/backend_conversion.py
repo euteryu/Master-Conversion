@@ -163,52 +163,44 @@ def convert_pdf_to_ppt_hybrid(pdf_path, ppt_path, progress_callback, dpi=150):
         traceback.print_exc()
         return f"Hybrid conversion failed: {str(e)}"
 
-def convert_pdf_to_ppt_image_only(pdf_path, ppt_path, progress_callback, dpi=150):
+
+def convert_ppt_to_pdf(ppt_path, pdf_path, progress_callback):
     """
-    Converts each PDF page to a non-editable image on a PPT slide.
-    The 'dpi' parameter controls the quality and speed.
+    Converts a PowerPoint file (.ppt or .pptx) to PDF.
+    Requires Microsoft PowerPoint to be installed on the system.
     """
+    powerpoint = None
+    presentation = None
     try:
-        pdf_doc = fitz.open(pdf_path)
-        prs = Presentation()
-        total_pages = len(pdf_doc)
+        progress_callback(1, 2, "Initializing PowerPoint...")
+        powerpoint = comtypes.client.CreateObject("Powerpoint.Application")
+        powerpoint.Visible = 1  # Keep it visible for debugging, change to 0 for hidden
+
+        # Ensure absolute paths are used, as COM objects can be sensitive
+        ppt_path_abs = os.path.abspath(ppt_path)
+        pdf_path_abs = os.path.abspath(pdf_path)
+
+        if not os.path.exists(ppt_path_abs):
+            return f"Input file not found: {ppt_path_abs}"
+
+        presentation = powerpoint.Presentations.Open(ppt_path_abs)
         
-        if total_pages == 0:
-            return "The selected PDF is empty."
+        # ppSaveAsPDF is format type 32
+        progress_callback(2, 2, "Saving as PDF...")
+        presentation.SaveAs(pdf_path_abs, 32)
         
-        # Set slide dimensions based on first page
-        first_page = pdf_doc.load_page(0)
-        prs.slide_width = int(first_page.rect.width * POINTS_TO_EMUS)
-        prs.slide_height = int(first_page.rect.height * POINTS_TO_EMUS)
-        
-        for page_num, page in enumerate(pdf_doc):
-            try:
-                # Render page to image
-                pix = page.get_pixmap(dpi=dpi)
-                
-                # Create slide
-                slide = prs.slides.add_slide(prs.slide_layouts[6])
-                slide.shapes.add_picture(
-                    io.BytesIO(pix.tobytes("png")), 
-                    Inches(0), Inches(0),
-                    width=prs.slide_width, 
-                    height=prs.slide_height
-                )
-                
-                progress_callback(page_num + 1, total_pages)
-            except Exception as e:
-                print(f"Warning: Could not convert page {page_num}: {e}")
-                progress_callback(page_num + 1, total_pages)
-                continue
-        
-        prs.save(ppt_path)
-        pdf_doc.close()
-        return None
+        return None # Success
     except Exception as e:
         traceback.print_exc()
-        return f"Image-only conversion failed: {str(e)}"
+        return f"PPT to PDF conversion failed. Ensure PowerPoint is installed. Error: {e}"
+    finally:
+        if presentation:
+            presentation.Close()
+        if powerpoint:
+            powerpoint.Quit()
+
 
 CONVERSION_STRATEGIES = {
-    ('PDF', 'PPT', 'Hybrid (Editable Text)'): convert_pdf_to_ppt_hybrid,
-    ('PDF', 'PPT', 'Image Only (Flattened)'): convert_pdf_to_ppt_image_only,
+    'pdf_to_ppt': convert_pdf_to_ppt_hybrid,
+    'ppt_to_pdf': convert_ppt_to_pdf,
 }
